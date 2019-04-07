@@ -12,12 +12,7 @@ class Player:
     def __init__(self, current_control, game_window):
         self.game_window = game_window
         self.rect = self.image.get_rect()
-
-        self.is_player_initialize = False
-        self.last_x = 0
-        self.last_y = 0
         self.control = current_control(self.rect)
-        self.is_initialize = False
 
     def move(self):
         self.control.move_object()
@@ -67,7 +62,7 @@ class Bullet:
         return False
 
 
-class Enemy:
+class UFO:
     MIN_SIZE = 50
     MAX_SIZE = 150
     MIN_SPEED = 10
@@ -90,3 +85,29 @@ class Enemy:
     def move(self):
         self.rect.move_ip(0, self.speed)
         self.game_window.blit(self.surface, self.rect)
+
+
+class Background:
+    speed = 5
+    image = pygame.transform.scale(pygame.image.load("space.png"),
+                                   (interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
+
+    def __init__(self, game_window):
+        self.rects = [self.image.get_rect(), self.image.get_rect()]
+        self.rects[0].center = interface.WINDOW_SIZE_X / 2, interface.WINDOW_SIZE_Y / 2
+        self.rects[1].center = interface.WINDOW_SIZE_X / 2, - interface.WINDOW_SIZE_Y / 2
+        self.game_window = game_window
+
+    def show(self):
+        self.game_window.blit(self.image, self.rects[0])
+        self.game_window.blit(self.image, self.rects[1])
+
+    def update(self):
+        for r in self.rects:
+            if r.centery > interface.WINDOW_SIZE_Y / 2 * 3:
+                self.rects.remove(r)
+                new_rect = self.image.get_rect()
+                new_rect.center = interface.WINDOW_SIZE_X / 2, - interface.WINDOW_SIZE_Y / 2
+                self.rects.append(new_rect)
+            r.move_ip(0, self.speed)
+            self.game_window.blit(self.image, r)

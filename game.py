@@ -1,4 +1,4 @@
-import cv2
+import cv2.cv2 as cv2
 import sys
 import pygame
 import game_objects
@@ -10,8 +10,6 @@ class Game:
     FREQUENCY_OF_ENEMIES = 10
     FREQUENCY_OF_BULLETS = 3
     FPS = 60
-    BACKGROUND = pygame.transform.scale(pygame.image.load("space.png"),
-                                        (interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
 
     def __init__(self):
         pygame.init()
@@ -21,12 +19,13 @@ class Game:
         self.main_clock = pygame.time.Clock()
         self.game_window = pygame.display.set_mode((interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
         self.player = game_objects.Player(self.control, self.game_window)
+        self.background = game_objects.Background(self.game_window)
 
         pygame.display.set_caption('lab_2')
         pygame.mouse.set_visible(True)
 
     def show_menu(self):
-        self.game_window.blit(self.BACKGROUND, [0, 0])
+        self.background.show()
         b_1 = interface.Button(self.game_window,
                                interface.WINDOW_SIZE_X / 3,
                                interface.WINDOW_SIZE_Y / 2 - 300,
@@ -56,22 +55,21 @@ class Game:
         self.bullets.clear()
         self.player = game_objects.Player(self.control, self.game_window)
         pygame.mouse.set_visible(False)
-
         score = 0
         is_active = True
         enemy_checker = 0
         bullet_checker = 0
         while is_active:
+            self.background.update()
             score += 1
             enemy_checker += 1
             bullet_checker += 1
-            self.game_window.blit(self.BACKGROUND, [0, 0])
 
             self.player.move()
 
             if enemy_checker == self.FREQUENCY_OF_ENEMIES:
                 enemy_checker = 0
-                enemy = game_objects.Enemy(self.game_window)
+                enemy = game_objects.UFO(self.game_window)
                 enemy.create()
                 self.enemies.append(enemy)
 

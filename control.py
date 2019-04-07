@@ -1,6 +1,6 @@
-import cv2
 import interface
 import pygame
+import cv2.cv2 as cv2
 
 
 class CameraControl:
