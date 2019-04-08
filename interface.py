@@ -23,6 +23,34 @@ class Button:
             return True
 
 
+class HealthIndicator:
+    SIZE = 100
+    image = pygame.transform.scale(pygame.image.load('heart.png'), (SIZE, SIZE))
+
+    def __init__(self, game_window):
+        self.game_window = game_window
+        self.rects = [pygame.Rect(0, 0, self.SIZE, self.SIZE),
+                      pygame.Rect(self.SIZE, 0, self.SIZE, self.SIZE),
+                      pygame.Rect(self.SIZE * 2, 0, self.SIZE, self.SIZE),
+                      pygame.Rect(self.SIZE * 3, 0, self.SIZE, self.SIZE),
+                      pygame.Rect(self.SIZE * 4, 0, self.SIZE, self.SIZE)]
+
+    def show(self, num):
+        for r in range(num):
+            self.game_window.blit(self.image, self.rects[r])
+
+
+class PointsIndicator:
+    SIZE = 50
+    COLOR = (255, 255, 255)
+
+    def __init__(self, game_window):
+        self.game_window = game_window
+
+    def show(self, points):
+        draw_text('Score: %s' % points, self.game_window, self.SIZE, (255, 255, 255), 10, 110)
+
+
 def draw_text(text, surface, font_size, color, x, y):
     text_obj = pygame.font.SysFont(None, font_size).render(text, 1, color)
     text_rect = text_obj.get_rect()

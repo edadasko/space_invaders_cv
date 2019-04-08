@@ -4,12 +4,14 @@ import pygame
 import game_objects
 import interface
 import control
+import random
 
 
 class Game:
     FREQUENCY_OF_ENEMIES = 10
     FREQUENCY_OF_BULLETS = 3
     FPS = 60
+    CHANGE_SCORE = 5000
 
     def __init__(self):
         pygame.init()
@@ -20,6 +22,8 @@ class Game:
         self.game_window = pygame.display.set_mode((interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
         self.player = game_objects.Player(self.control, self.game_window)
         self.background = game_objects.Background(self.game_window)
+        self.health_indicator = interface.HealthIndicator(self.game_window)
+        self.points_indicator = interface.PointsIndicator(self.game_window)
 
         pygame.display.set_caption('lab_2')
         pygame.mouse.set_visible(True)
@@ -56,30 +60,66 @@ class Game:
         self.player = game_objects.Player(self.control, self.game_window)
         pygame.mouse.set_visible(False)
         score = 0
+        change_score = 0
         is_active = True
         enemy_checker = 0
         bullet_checker = 0
+        boss_bullet_checker = 0
+        is_boss = False
+        ufos = [game_objects.StandardUFO, game_objects.BossUFO, game_objects.BackUFO]
+        quantity_of_level_types = 3
+        current_level_type = 0
+        ufo = game_objects.StandardUFO
         while is_active:
             self.background.update()
             score += 1
+            change_score += 1
             enemy_checker += 1
             bullet_checker += 1
-
+            boss_bullet_checker += 1
             self.player.move()
 
-            if enemy_checker == self.FREQUENCY_OF_ENEMIES:
-                enemy_checker = 0
-                enemy = game_objects.UFO(self.game_window)
+            if change_score > self.CHANGE_SCORE and not is_boss:
+                new_level_type = current_level_type
+                while new_level_type == current_level_type:
+                    new_level_type = random.randint(0, quantity_of_level_types - 1)
+                ufo = ufos[new_level_type]
+                change_score = 0
+                current_level_type = new_level_type
+
+            if ufo is game_objects.BossUFO and not is_boss:
+                enemy = ufo(self.game_window)
                 enemy.create()
                 self.enemies.append(enemy)
+                is_boss = True
+            elif ufo is not game_objects.BossUFO:
+                if enemy_checker >= self.FREQUENCY_OF_ENEMIES:
+                    enemy_checker = 0
+                    enemy = ufo(self.game_window)
+                    enemy.create()
+                    self.enemies.append(enemy)
 
             for en in self.enemies:
-                if en.rect.top > interface.WINDOW_SIZE_Y or en.health < 1:
-                    score += en.size
+                if type(en) == game_objects.BossUFO and\
+                        boss_bullet_checker > game_objects.BossUFO.FREQUENCY_OF_BULLETS and\
+                        en.rect.centery >= game_objects.BossUFO.POSITION_Y:
+                    self.bullets.append(en.shoot())
+                    boss_bullet_checker = 0
+                if en.rect.top > interface.WINDOW_SIZE_Y or en.health < en.MIN_SIZE:
+                    if en.health < en.MIN_SIZE:
+                        score += en.size
+                        change_score += en.size
+                        if is_boss and type(en) == game_objects.BossUFO:
+                            is_boss = False
+                            score += en.size * 5
+                            change_score = self.CHANGE_SCORE + 1
+                            if self.player.health < game_objects.Player.MAX_HEALTH:
+                                self.player.health += 1
                     self.enemies.remove(en)
 
             for b in self.bullets:
-                if b.rect.top < 0 or b.is_collision(self.enemies):
+                if b.rect.top < 0 or b.rect.top > interface.WINDOW_SIZE_Y \
+                        or b.is_collision(self.enemies, self.player):
                     self.bullets.remove(b)
 
             for en in self.enemies:
@@ -88,10 +128,14 @@ class Game:
             for b in self.bullets:
                 b.move()
 
-            if self.player.is_collision(self.enemies):
+            self.player.is_collision(self.enemies)
+
+            if self.player.health < 1:
                 break
 
-            interface.draw_text('Score: %s' % score, self.game_window, 50, (255, 255, 255), 10, 0)
+            self.health_indicator.show(self.player.health)
+            self.points_indicator.show(score)
+
             pygame.display.update()
 
             pressed = pygame.mouse.get_pressed()
