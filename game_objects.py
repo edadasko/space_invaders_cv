@@ -11,7 +11,8 @@ class Player:
     MAX_HEALTH = 5
     health = 3
 
-    image = pygame.transform.scale(pygame.image.load('player.png'),
+    image_path = 'player.png'
+    image = pygame.transform.scale(pygame.image.load(image_path),
                                    (SIZE_X, SIZE_Y))
 
     def __init__(self, current_control, game_window):
@@ -164,7 +165,7 @@ class StandardUFO(UFO):
 
 
 class BackUFO(UFO):
-    MIN_SIZE = 150
+    MIN_SIZE = 100
     MAX_SIZE = 250
     max_speed = 20
 

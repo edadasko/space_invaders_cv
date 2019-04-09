@@ -46,18 +46,20 @@ class Game:
         self.current_level_type = 0
         self.ufo = game_objects.StandardUFO
 
+        self.pause = False
+
         pygame.display.set_caption('lab_3')
         pygame.mouse.set_visible(True)
 
     def main_menu(self):
+        self.set_all_to_zero()
         self.background.show()
         interface.show_main_menu(self, self.game_window)
 
     def start(self, current_control):
+        self.set_all_to_zero()
         pygame.mixer.music.play(-1)
         self.control = current_control
-        self.enemies.clear()
-        self.bullets.clear()
         self.player = game_objects.Player(self.control, self.game_window)
         pygame.mouse.set_visible(False)
 
@@ -66,9 +68,7 @@ class Game:
             repeat = self.update_game_window()
 
         pygame.mixer.music.stop()
-        interface.show_lose_menu(self.game_window, self.score)
-
-        self.restart()
+        interface.show_lose_menu(self)
 
     def update_game_window(self):
         self.background.update()
@@ -165,6 +165,10 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.pause = True
+                    interface.show_pause_menu(self)
 
         if self.control is control.CameraControl:
             k = cv2.waitKey(30) & 0xff
@@ -173,7 +177,7 @@ class Game:
         self.main_clock.tick(self.FPS)
         return True
 
-    def restart(self):
+    def set_all_to_zero(self):
         self.score = 0
         self.change_score = 0
         self.enemy_checker = 0
@@ -182,19 +186,12 @@ class Game:
         self.is_boss = False
         self.ufo = game_objects.StandardUFO
         self.difficulty = 0
+        self.enemies = []
+        self.bullets = []
+        self.explosions = []
 
         if self.control is control.CameraControl:
             self.player.control.destroy()
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.mouse.set_visible(True)
-                        self.main_menu()
-                    self.start(self.control)
 
 
 game = Game()
