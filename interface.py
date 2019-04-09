@@ -4,6 +4,8 @@ import control
 WINDOW_SIZE_X = 1800
 WINDOW_SIZE_Y = 1440
 
+WHITE = (255, 255, 255)
+BLACK = (255, 255, 255)
 
 class Button:
     def __init__(self, game_window, x, y, w, h, color, text, action):
@@ -12,7 +14,7 @@ class Button:
         self.game_window = game_window
         self.rect = pygame.Rect(x, y, w, h)
         pygame.draw.rect(game_window, color, self.rect)
-        draw_text(text, game_window, int(h / 2), (255, 255, 255), x + w / 10, y + h / 3)
+        draw_text(text, game_window, int(h / 2), WHITE, x + w / 10, y + h / 3)
 
     def is_clicked(self, x, y):
         if self.rect.collidepoint(x, y):

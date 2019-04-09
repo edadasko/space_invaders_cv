@@ -33,6 +33,8 @@ class Player:
                 self.collision_sound.play()
                 self.health -= 1
                 enemies.remove(en)
+                return True
+        return False
 
     def shoot(self):
         self.shoot_sound.play()
@@ -100,6 +102,8 @@ class Bullet:
                     self.collision_sounds[1].play()
                     if type(en) == BossUFO:
                         en.health -= int(self.DAMAGE / 5)
+                    elif type(en) == BackUFO:
+                        en.health -= int(self.DAMAGE / 2)
                     else:
                         en.health -= self.DAMAGE
                     return True
@@ -159,18 +163,34 @@ class StandardUFO(UFO):
 
 
 class BackUFO(UFO):
-    MAX_SIZE = 300
-    image = pygame.image.load('ufo_pictures/back_ufo.png')
+    MIN_SIZE = 150
+    MAX_SIZE = 250
+    MAX_SPEED = 20
+
+    images = [pygame.image.load('ufo_pictures/back_ufo.png'),
+              pygame.transform.flip(pygame.image.load('ufo_pictures/back_ufo.png'), True, False)]
 
     def __init__(self, game_window):
         UFO.__init__(self, game_window)
-        self.rect = pygame.Rect(interface.WINDOW_SIZE_X,
-                                random.randint(- interface.WINDOW_SIZE_Y / 3, interface.WINDOW_SIZE_Y / 3),
-                                self.size * 2, self.size)
+        self.type = random.randint(0, 1)
+        if self.type == 0:
+            self.rect = pygame.Rect(interface.WINDOW_SIZE_X + self.size,
+                                    random.randint(- interface.WINDOW_SIZE_Y / 3, interface.WINDOW_SIZE_Y / 5),
+                                    self.size * 2, self.size)
+
+        else:
+            self.rect = pygame.Rect(- self.size * 2,
+                                    random.randint(- interface.WINDOW_SIZE_Y / 3, interface.WINDOW_SIZE_Y / 5),
+                                    self.size * 2, self.size)
+
+        self.image = self.images[self.type]
         self.surface = pygame.transform.scale(self.image, (self.size * 2, self.size))
 
     def move(self):
-        self.rect.move_ip(-self.speed * 2, self.speed)
+        if self.type == 0:
+            self.rect.move_ip(-self.speed * 2, self.speed)
+        else:
+            self.rect.move_ip(self.speed * 2, self.speed)
         if self.health > 0:
             self.surface = pygame.transform.scale(self.image, (self.health * 2, self.health))
             center = self.rect.centerx, self.rect.centery
@@ -187,6 +207,9 @@ class BossUFO(UFO):
               pygame.image.load('ufo_pictures/boss_2.png')]
     count_of_images = 2
 
+    shoot_sound = pygame.mixer.Sound("sounds/player_shoot.wav")
+    shoot_sound.set_volume(0.5)
+
     def __init__(self, game_window):
         UFO.__init__(self, game_window)
         pygame.mixer.init()
@@ -195,7 +218,7 @@ class BossUFO(UFO):
         self.speed = 10
         self.image = self.images[random.randint(0, self.count_of_images - 1)]
         self.surface = pygame.transform.scale(self.image, (self.size * 2, self.size))
-        self.rect = pygame.Rect(interface.WINDOW_SIZE_X / 2 - self.size, 0 - self.size, self.size * 2, self.size * 0.8)
+        self.rect = pygame.Rect(interface.WINDOW_SIZE_X / 2 - self.size, 0 - self.size, self.size * 2, self.size * 0.6)
 
     def move(self):
         if self.rect.centery < self.POSITION_Y:
@@ -203,11 +226,12 @@ class BossUFO(UFO):
         if self.health > 0:
             self.surface = pygame.transform.scale(self.image, (self.health * 2, self.health))
             center = self.rect.centerx, self.rect.centery
-            self.rect.size = self.health * 2, self.health * 0.8
+            self.rect.size = self.health * 2, self.health * 0.6
             self.rect.center = center
         self.game_window.blit(self.surface, self.rect)
 
     def shoot(self):
+        self.shoot_sound.play()
         bullet = Bullet(self.game_window,
                         random.randint(self.rect.centerx - int(self.size / 3), self.rect.centerx + int(self.size / 3)),
                         self.rect.centery + 100, self)
@@ -216,7 +240,7 @@ class BossUFO(UFO):
 
 
 class Background:
-    speed = 5
+    speed = 10
     image = pygame.transform.scale(pygame.image.load("space.png"),
                                    (interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
 
@@ -239,3 +263,4 @@ class Background:
                 self.rects.append(new_rect)
             r.move_ip(0, self.speed)
             self.game_window.blit(self.image, r)
+

@@ -5,13 +5,14 @@ import game_objects
 import interface
 import control
 import random
+import animations
 
 
 class Game:
     FREQUENCY_OF_ENEMIES = 10
     FREQUENCY_OF_BULLETS = 3
     FPS = 60
-    CHANGE_SCORE = 1000
+    CHANGE_SCORE = 5000
 
     def __init__(self):
         pygame.mixer.music.load('sounds/background.mp3')
@@ -19,6 +20,7 @@ class Game:
         self.control = control.MouseControl
         self.enemies = []
         self.bullets = []
+        self.explosions = []
         self.main_clock = pygame.time.Clock()
         self.game_window = pygame.display.set_mode((interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
         self.player = game_objects.Player(self.control, self.game_window)
@@ -55,7 +57,7 @@ class Game:
             pygame.display.update()
 
     def start(self, current_control):
-        pygame.mixer.music.play()
+        pygame.mixer.music.play(-1)
         self.control = current_control
         self.enemies.clear()
         self.bullets.clear()
@@ -121,6 +123,16 @@ class Game:
             for b in self.bullets:
                 if b.rect.top < 0 or b.rect.top > interface.WINDOW_SIZE_Y \
                         or b.is_collision(self.enemies, self.player):
+                    if b.is_collision(self.enemies, self.player):
+                        if type(b.owner) == game_objects.Player:
+                            ex = animations.ExplosionAnimation(animations.SMALL,
+                                                               b.rect.center,
+                                                               self.game_window)
+                        else:
+                            ex = animations.ExplosionAnimation(animations.LARGE,
+                                                               self.player.rect.center,
+                                                               self.game_window)
+                        self.explosions.append(ex)
                     self.bullets.remove(b)
 
             for en in self.enemies:
@@ -129,13 +141,20 @@ class Game:
             for b in self.bullets:
                 b.move()
 
-            self.player.is_collision(self.enemies)
+            if self.player.is_collision(self.enemies):
+                self.explosions.append(animations.ExplosionAnimation(animations.LARGE,
+                                                                     self.player.rect.center,
+                                                                     self.game_window))
 
             if self.player.health < 1:
                 break
 
             self.health_indicator.show(self.player.health)
             self.points_indicator.show(score)
+
+            for ex in self.explosions:
+                if not ex.update():
+                    self.explosions.remove(ex)
 
             pygame.display.update()
 
