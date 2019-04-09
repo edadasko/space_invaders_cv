@@ -1,11 +1,13 @@
 import pygame
 import control
+import sys
 
 WINDOW_SIZE_X = 1800
 WINDOW_SIZE_Y = 1440
 
 WHITE = (255, 255, 255)
 BLACK = (255, 255, 255)
+
 
 class Button:
     def __init__(self, game_window, x, y, w, h, color, text, action):
@@ -58,4 +60,39 @@ def draw_text(text, surface, font_size, color, x, y):
     text_rect = text_obj.get_rect()
     text_rect.topleft = (x, y)
     surface.blit(text_obj, text_rect)
+
+
+def show_lose_menu(game_window, score):
+    draw_text('GAME OVER', game_window, 100, (255, 255, 255),
+              (WINDOW_SIZE_X / 2), (WINDOW_SIZE_Y / 2))
+    draw_text('Your score: ' + str(score), game_window, 100, (255, 255, 255),
+              (WINDOW_SIZE_X / 2), (WINDOW_SIZE_Y / 2 + 100))
+    draw_text('Press a key to play again.', game_window, 100, (255, 255, 255),
+              (WINDOW_SIZE_X / 2), (WINDOW_SIZE_Y / 2) + 200)
+    pygame.display.update()
+
+
+def show_main_menu(game, game_window):
+    b_1 = Button(game_window,
+                 WINDOW_SIZE_X / 3,
+                 WINDOW_SIZE_Y / 2 - 300,
+                 600, 100, (0, 125, 255),
+                 "Camera Control",
+                 game.start)
+    b_2 = Button(game_window,
+                 WINDOW_SIZE_X / 3,
+                 WINDOW_SIZE_Y / 2 - 100,
+                 600, 100, (0, 125, 255),
+                 "Mouse Control",
+                 game.start)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                b_1.is_clicked(event.pos[0], event.pos[1])
+                b_2.is_clicked(event.pos[0], event.pos[1])
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        pygame.display.update()
 

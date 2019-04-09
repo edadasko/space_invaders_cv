@@ -120,18 +120,19 @@ class Bullet:
 class UFO(ABC):
     MIN_SIZE = 200
     MAX_SIZE = 500
-    MIN_SPEED = 10
-    MAX_SPEED = 30
+    min_speed = 10
+    max_speed = 30
 
     image = None
     surface = None
 
-    def __init__(self, game_window):
+    def __init__(self, game_window, difficulty):
         self.game_window = game_window
         self.size = random.randint(self.MIN_SIZE, self.MAX_SIZE)
         self.rect = pygame.Rect(random.randint(0, interface.WINDOW_SIZE_X - self.size),
                                 0 - self.size, self.size, self.size * 0.8)
-        self.speed = random.randint(self.MIN_SPEED, self.MAX_SPEED)
+        self.speed = random.randint(self.min_speed, self.max_speed)
+        self.speed += difficulty
         self.health = self.size
 
     def create(self):
@@ -147,8 +148,8 @@ class StandardUFO(UFO):
               pygame.image.load('ufo_pictures/ufo_3.png')]
     count_of_images = 2
 
-    def __init__(self, game_window):
-        UFO.__init__(self, game_window)
+    def __init__(self, game_window, difficulty):
+        UFO.__init__(self, game_window, difficulty)
         self.image = self.images[random.randint(0, self.count_of_images - 1)]
         self.surface = pygame.transform.scale(self.image, (self.size, self.size))
 
@@ -165,13 +166,13 @@ class StandardUFO(UFO):
 class BackUFO(UFO):
     MIN_SIZE = 150
     MAX_SIZE = 250
-    MAX_SPEED = 20
+    max_speed = 20
 
     images = [pygame.image.load('ufo_pictures/back_ufo.png'),
               pygame.transform.flip(pygame.image.load('ufo_pictures/back_ufo.png'), True, False)]
 
-    def __init__(self, game_window):
-        UFO.__init__(self, game_window)
+    def __init__(self, game_window, difficulty):
+        UFO.__init__(self, game_window, difficulty)
         self.type = random.randint(0, 1)
         if self.type == 0:
             self.rect = pygame.Rect(interface.WINDOW_SIZE_X + self.size,
@@ -210,9 +211,10 @@ class BossUFO(UFO):
     shoot_sound = pygame.mixer.Sound("sounds/player_shoot.wav")
     shoot_sound.set_volume(0.5)
 
-    def __init__(self, game_window):
-        UFO.__init__(self, game_window)
+    def __init__(self, game_window, difficulty):
+        UFO.__init__(self, game_window, difficulty)
         pygame.mixer.init()
+        self.difficulty = difficulty
         self.size = 800
         self.health = self.size
         self.speed = 10
@@ -232,11 +234,14 @@ class BossUFO(UFO):
 
     def shoot(self):
         self.shoot_sound.play()
-        bullet = Bullet(self.game_window,
-                        random.randint(self.rect.centerx - int(self.size / 3), self.rect.centerx + int(self.size / 3)),
-                        self.rect.centery + 100, self)
-        bullet.create()
-        return bullet
+        bullets = []
+        for i in range(int(self.difficulty / 5) + 1):
+            bullet = Bullet(self.game_window,
+                            random.randint(self.rect.centerx - int(self.size / 3), self.rect.centerx + int(self.size / 3)),
+                            self.rect.centery + 100, self)
+            bullet.create()
+            bullets.append(bullet)
+        return bullets
 
 
 class Background:
