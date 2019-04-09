@@ -11,9 +11,10 @@ class Game:
     FREQUENCY_OF_ENEMIES = 10
     FREQUENCY_OF_BULLETS = 3
     FPS = 60
-    CHANGE_SCORE = 5000
+    CHANGE_SCORE = 1000
 
     def __init__(self):
+        pygame.mixer.music.load('sounds/background.mp3')
         pygame.init()
         self.control = control.MouseControl
         self.enemies = []
@@ -54,6 +55,7 @@ class Game:
             pygame.display.update()
 
     def start(self, current_control):
+        pygame.mixer.music.play()
         self.control = current_control
         self.enemies.clear()
         self.bullets.clear()
@@ -113,8 +115,7 @@ class Game:
                             is_boss = False
                             score += en.size * 5
                             change_score = self.CHANGE_SCORE + 1
-                            if self.player.health < game_objects.Player.MAX_HEALTH:
-                                self.player.health += 1
+                            self.player.add_health()
                     self.enemies.remove(en)
 
             for b in self.bullets:
@@ -154,6 +155,7 @@ class Game:
                     break
             self.main_clock.tick(self.FPS)
 
+        pygame.mixer.music.stop()
         interface.draw_text('GAME OVER', self.game_window, 100, (255, 255, 255),
                             (interface.WINDOW_SIZE_X / 2), (interface.WINDOW_SIZE_Y / 2))
         interface.draw_text('Your score: ' + str(score), self.game_window, 100, (255, 255, 255),

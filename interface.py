@@ -19,7 +19,7 @@ class Button:
             if self.text == "Camera Control":
                 self.action(control.CameraControl)
             elif self.text == "Mouse Control":
-                    self.action(control.MouseControl)
+                self.action(control.MouseControl)
             return True
 
 

@@ -2,6 +2,7 @@ import random
 import pygame
 import interface
 from abc import ABC, abstractmethod
+pygame.mixer.init()
 
 
 class Player:
@@ -9,10 +10,15 @@ class Player:
     SIZE_Y = 200
     MAX_HEALTH = 5
     health = 3
+
     image = pygame.transform.scale(pygame.image.load('player.png'),
                                    (SIZE_X, SIZE_Y))
 
     def __init__(self, current_control, game_window):
+        self.shoot_sound = pygame.mixer.Sound("sounds/player_shoot.wav")
+        self.shoot_sound.set_volume(0.5)
+        self.collision_sound = pygame.mixer.Sound("sounds/explosion_1.wav")
+        self.collision_sound.set_volume(0.5)
         self.game_window = game_window
         self.rect = self.image.get_rect()
         self.control = current_control(self.rect)
@@ -24,15 +30,21 @@ class Player:
     def is_collision(self, enemies):
         for en in enemies:
             if self.rect.colliderect(en.rect):
+                self.collision_sound.play()
                 self.health -= 1
                 enemies.remove(en)
 
     def shoot(self):
+        self.shoot_sound.play()
         bullet_1 = Bullet(self.game_window, self.rect.centerx - self.SIZE_X / 4, self.rect.centery, self)
         bullet_2 = Bullet(self.game_window, self.rect.centerx + self.SIZE_X / 4, self.rect.centery, self)
         bullet_1.create()
         bullet_2.create()
         return bullet_1, bullet_2
+
+    def add_health(self):
+        if self.health < self.MAX_HEALTH:
+            self.health += 1
 
 
 class Bullet:
@@ -40,6 +52,10 @@ class Bullet:
     SPEED = 30
     SIZE_X = 50
     SIZE_Y = 150
+    collision_sounds = [pygame.mixer.Sound("sounds/explosion_1.wav"),
+                        pygame.mixer.Sound("sounds/explosion_2.wav")]
+    for s in collision_sounds:
+        s.set_volume(0.5)
     image = pygame.transform.rotate(pygame.image.load("bullet.png"), 90)
 
     boss_images = [pygame.transform.rotate(pygame.image.load("boss_bullet.png"), 0),
@@ -81,6 +97,7 @@ class Bullet:
         if type(self.owner) == Player:
             for en in enemies:
                 if self.rect.colliderect(en.rect):
+                    self.collision_sounds[1].play()
                     if type(en) == BossUFO:
                         en.health -= int(self.DAMAGE / 5)
                     else:
@@ -90,6 +107,7 @@ class Bullet:
 
         elif type(self.owner) == BossUFO:
             if self.rect.colliderect(player.rect):
+                self.collision_sounds[0].play()
                 player.health -= 1
                 return True
             return False
@@ -164,13 +182,14 @@ class BackUFO(UFO):
 class BossUFO(UFO):
     MIN_SIZE = 300
     FREQUENCY_OF_BULLETS = 6
-    POSITION_Y = interface.WINDOW_SIZE_Y / 10
+    POSITION_Y = interface.WINDOW_SIZE_Y / 7
     images = [pygame.image.load('ufo_pictures/boss_1.png'),
               pygame.image.load('ufo_pictures/boss_2.png')]
     count_of_images = 2
 
     def __init__(self, game_window):
         UFO.__init__(self, game_window)
+        pygame.mixer.init()
         self.size = 800
         self.health = self.size
         self.speed = 10
