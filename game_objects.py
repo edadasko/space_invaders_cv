@@ -39,8 +39,8 @@ class Player:
 
     def shoot(self):
         self.shoot_sound.play()
-        bullet_1 = Bullet(self.game_window, self.rect.centerx - self.SIZE_X / 4, self.rect.centery, self)
-        bullet_2 = Bullet(self.game_window, self.rect.centerx + self.SIZE_X / 4, self.rect.centery, self)
+        bullet_1 = PlayerBullet(self.game_window, self.rect.centerx - self.SIZE_X / 4, self.rect.centery, self)
+        bullet_2 = PlayerBullet(self.game_window, self.rect.centerx + self.SIZE_X / 4, self.rect.centery, self)
         bullet_1.create()
         bullet_2.create()
         return bullet_1, bullet_2
@@ -50,72 +50,92 @@ class Player:
             self.health += 1
 
 
-class Bullet:
+class Bullet(ABC):
     DAMAGE = 15
     SPEED = 30
     SIZE_X = 50
     SIZE_Y = 150
-    collision_sounds = [pygame.mixer.Sound("sounds/explosion_1.wav"),
-                        pygame.mixer.Sound("sounds/explosion_2.wav")]
-    for s in collision_sounds:
-        s.set_volume(0.5)
-    image = pygame.transform.rotate(pygame.image.load("bullet.png"), 90)
 
-    boss_images = [pygame.transform.rotate(pygame.image.load("boss_bullet.png"), 0),
-                   pygame.transform.rotate(pygame.image.load("boss_bullet.png"), -45),
-                   pygame.transform.rotate(pygame.image.load("boss_bullet.png"), 45)]
-
-    quantity_of_types = 3
+    surface = rect = None
 
     def __init__(self, game_window, x, y, owner):
         self.owner = owner
         self.game_window = game_window
         self.x = x
         self.y = y
-        if type(self.owner) == Player:
-            self.surface = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
-        elif type(self.owner) == BossUFO:
-            self.type = random.randint(0, self.quantity_of_types - 1)
-            self.surface = pygame.transform.scale(self.boss_images[self.type], (self.SIZE_X * 2, self.SIZE_Y * 2))
-        self.rect = pygame.Rect(x, y, self.SIZE_X * 0.8, self.SIZE_Y * 0.8)
-        self.rect.center = (x, y)
 
     def create(self):
         self.game_window.blit(self.surface, self.rect)
 
+    @abstractmethod
     def move(self):
-        if type(self.owner) == Player:
-            self.rect.move_ip(0, - self.SPEED)
-            self.game_window.blit(self.surface, self.rect)
-        elif type(self.owner) == BossUFO:
-            if self.type == 0:
-                self.rect.move_ip(0, self.SPEED)
-            elif self.type == 1:
-                self.rect.move_ip(-self.SPEED, self.SPEED)
-            elif self.type == 2:
-                self.rect.move_ip(self.SPEED, self.SPEED)
-            self.game_window.blit(self.surface, self.rect)
+        pass
 
-    def is_collision(self, enemies, player):
-        if type(self.owner) == Player:
-            for en in enemies:
-                if self.rect.colliderect(en.rect):
-                    self.collision_sounds[1].play()
-                    if type(en) == BossUFO:
-                        en.health -= int(self.DAMAGE / 5)
-                    elif type(en) == BackUFO:
-                        en.health -= int(self.DAMAGE / 2)
-                    else:
-                        en.health -= self.DAMAGE
-                    return True
-            return False
+    @abstractmethod
+    def is_collision(self, objects):
+        pass
 
-        elif type(self.owner) == BossUFO:
-            if self.rect.colliderect(player.rect):
-                self.collision_sounds[0].play()
-                player.health -= 1
+
+class PlayerBullet(Bullet):
+    image = pygame.transform.rotate(pygame.image.load("bullets/bullet.png"), 90)
+    collision_sound = pygame.mixer.Sound("sounds/explosion_2.wav")
+    collision_sound.set_volume(0.5)
+
+    def __init__(self, game_window, x, y, owner):
+        Bullet.__init__(self, game_window, x, y, owner)
+        self.surface = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
+        self.rect = pygame.Rect(x, y, self.SIZE_X * 0.8, self.SIZE_Y * 0.8)
+        self.rect.center = (x, y)
+
+    def move(self):
+        self.rect.move_ip(0, - self.SPEED)
+        self.game_window.blit(self.surface, self.rect)
+
+    def is_collision(self, objects):
+        for en in objects:
+            if type(en) != Player and self.rect.colliderect(en.rect):
+                self.collision_sound.play()
+                if type(en) == BossUFO:
+                    en.health -= int(self.DAMAGE / 5)
+                elif type(en) == SideUFO:
+                    en.health -= int(self.DAMAGE / 2)
+                else:
+                    en.health -= self.DAMAGE
                 return True
-            return False
+        return False
+
+
+class BossBullet(Bullet):
+    images = [pygame.transform.rotate(pygame.image.load("bullets/boss_bullet.png"), 0),
+              pygame.transform.rotate(pygame.image.load("bullets/boss_bullet.png"), -45),
+              pygame.transform.rotate(pygame.image.load("bullets/boss_bullet.png"), 45)]
+    quantity_of_types = 3
+
+    collision_sound = pygame.mixer.Sound("sounds/explosion_1.wav")
+    collision_sound.set_volume(0.5)
+
+    def __init__(self, game_window, x, y, owner):
+        Bullet.__init__(self, game_window, x, y, owner)
+        self.type = random.randint(0, self.quantity_of_types - 1)
+        self.surface = pygame.transform.scale(self.images[self.type], (self.SIZE_X * 2, self.SIZE_Y * 2))
+        self.rect = pygame.Rect(x, y, self.SIZE_X * 0.8, self.SIZE_Y * 0.8)
+        self.rect.center = (x, y)
+
+    def move(self):
+        if self.type == 0:
+            self.rect.move_ip(0, self.SPEED)
+        elif self.type == 1:
+            self.rect.move_ip(-self.SPEED, self.SPEED)
+        elif self.type == 2:
+            self.rect.move_ip(self.SPEED, self.SPEED)
+        self.game_window.blit(self.surface, self.rect)
+
+    def is_collision(self, player):
+        if type(player) == Player and self.rect.colliderect(player.rect):
+            self.collision_sound.play()
+            player.health -= 1
+            return True
+        return False
 
 
 class UFO(ABC):
@@ -164,7 +184,7 @@ class StandardUFO(UFO):
         self.game_window.blit(self.surface, self.rect)
 
 
-class BackUFO(UFO):
+class SideUFO(UFO):
     MIN_SIZE = 100
     MAX_SIZE = 250
     max_speed = 20
@@ -237,9 +257,10 @@ class BossUFO(UFO):
         self.shoot_sound.play()
         bullets = []
         for i in range(int(self.difficulty / 5) + 1):
-            bullet = Bullet(self.game_window,
-                            random.randint(self.rect.centerx - int(self.size / 3), self.rect.centerx + int(self.size / 3)),
-                            self.rect.centery + 100, self)
+            bullet = BossBullet(self.game_window,
+                                random.randint(self.rect.centerx - int(self.size / 3),
+                                               self.rect.centerx + int(self.size / 3)),
+                                self.rect.centery + 100, self)
             bullet.create()
             bullets.append(bullet)
         return bullets
@@ -269,4 +290,3 @@ class Background:
                 self.rects.append(new_rect)
             r.move_ip(0, self.speed)
             self.game_window.blit(self.image, r)
-

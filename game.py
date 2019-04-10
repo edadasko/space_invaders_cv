@@ -1,5 +1,4 @@
 import cv2.cv2 as cv2
-import sys
 import pygame
 import game_objects
 import interface
@@ -12,7 +11,7 @@ class Game:
     FREQUENCY_OF_ENEMIES = 10
     FREQUENCY_OF_BULLETS = 3
     FPS = 60
-    CHANGE_SCORE = 5000
+    CHANGE_SCORE = 1000
 
     def __init__(self):
         pygame.init()
@@ -41,7 +40,7 @@ class Game:
         self.boss_bullet_checker = 0
 
         self.is_boss = False
-        self.ufos = [game_objects.StandardUFO, game_objects.BossUFO, game_objects.BackUFO]
+        self.ufos = [game_objects.StandardUFO, game_objects.BossUFO, game_objects.SideUFO]
         self.quantity_of_level_types = 3
         self.current_level_type = 0
         self.ufo = game_objects.StandardUFO
@@ -52,6 +51,7 @@ class Game:
         pygame.mouse.set_visible(True)
 
     def main_menu(self):
+        pygame.mixer.music.stop()
         self.set_all_to_zero()
         self.background.show()
         interface.show_main_menu(self, self.game_window)
@@ -79,6 +79,7 @@ class Game:
         self.boss_bullet_checker += 1
         self.player.move()
 
+        # смена вида НЛО
         if self.change_score > self.CHANGE_SCORE and not self.is_boss:
             self.difficulty += 1
             new_level_type = self.current_level_type
@@ -88,6 +89,7 @@ class Game:
             self.change_score = 0
             self.current_level_type = new_level_type
 
+        # добавление НЛО на экран
         if self.ufo is game_objects.BossUFO and not self.is_boss:
             enemy = self.ufo(self.game_window, self.difficulty)
             enemy.create()
@@ -100,6 +102,7 @@ class Game:
                 enemy.create()
                 self.enemies.append(enemy)
 
+        # контроль всех НЛО (удаление, взрывы, выпуск снарядов)
         for en in self.enemies:
             if type(en) == game_objects.BossUFO and\
                     self.boss_bullet_checker > game_objects.BossUFO.FREQUENCY_OF_BULLETS and\
@@ -110,6 +113,9 @@ class Game:
                 if en.health < en.MIN_SIZE:
                     self.score += en.size
                     self.change_score += en.size
+                    self.explosions.append(animations.ExplosionAnimation(animations.SMALL,
+                                                                         en.rect.center,
+                                                                         self.game_window))
                     if self.is_boss and type(en) == game_objects.BossUFO:
                         self.is_boss = False
                         self.score += en.size * 5
@@ -120,40 +126,50 @@ class Game:
                                                self.game_window))
                 self.enemies.remove(en)
 
-        for b in self.bullets:
-            if b.rect.top < 0 or b.rect.top > interface.WINDOW_SIZE_Y \
-                    or b.is_collision(self.enemies, self.player):
-                if b.is_collision(self.enemies, self.player):
-                    if type(b.owner) == game_objects.Player:
-                        ex = animations.ExplosionAnimation(animations.SMALL,
-                                                           b.rect.center,
-                                                           self.game_window)
-                    else:
-                        ex = animations.ExplosionAnimation(animations.LARGE,
-                                                           self.player.rect.center,
-                                                           self.game_window)
-                    self.explosions.append(ex)
-                self.bullets.remove(b)
+        # удаление неактивных снарядов
+        for ex in self.explosions:
+            if not ex.update():
+                self.explosions.remove(ex)
 
-        for en in self.enemies:
-            en.move()
+        # коллизии снарядов с объектами -> взрывы
         for b in self.bullets:
-            b.move()
+            if type(b) == game_objects.PlayerBullet and b.is_collision(self.enemies):
+                ex = animations.ExplosionAnimation(animations.SMALL,
+                                                   b.rect.center,
+                                                   self.game_window)
+                self.explosions.append(ex)
+                self.bullets.remove(b)
+                continue
+            if type(b) == game_objects.BossBullet and b.is_collision(self.player):
+                ex = animations.ExplosionAnimation(animations.LARGE,
+                                                   self.player.rect.center,
+                                                   self.game_window)
+                self.explosions.append(ex)
+                self.bullets.remove(b)
+                continue
+            if b.rect.top < 0 or b.rect.top > interface.WINDOW_SIZE_Y:
+                self.bullets.remove(b)
 
         if self.player.is_collision(self.enemies):
             self.explosions.append(animations.ExplosionAnimation(animations.LARGE,
                                                                  self.player.rect.center,
                                                                  self.game_window))
+
+        # передвижение объектов
+        for en in self.enemies:
+            en.move()
+        for b in self.bullets:
+            b.move()
+
+        # проверка на смерть игрока
         if self.player.health < 1:
             return False
 
+        # индикаторы состояния игры
         self.health_indicator.show(self.player.health)
         self.points_indicator.show(self.score)
 
-        for ex in self.explosions:
-            if not ex.update():
-                self.explosions.remove(ex)
-
+        # нажатие мыши -> выпуск снарядов
         pressed = pygame.mouse.get_pressed()
         if self.bullet_checker > self.FREQUENCY_OF_BULLETS and \
                 (pressed[0] or self.control is control.CameraControl):
@@ -167,7 +183,6 @@ class Game:
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.pause = True
                     interface.show_pause_menu(self)
 
         if self.control is control.CameraControl:

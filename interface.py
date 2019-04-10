@@ -163,5 +163,3 @@ def clicks_checked(*buttons):
                 pygame.quit()
                 sys.exit()
         pygame.display.update()
-
-
