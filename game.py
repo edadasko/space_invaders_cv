@@ -102,6 +102,12 @@ class Game:
                 enemy.create()
                 self.enemies.append(enemy)
 
+        # передвижение объектов
+        for en in self.enemies:
+            en.move()
+        for b in self.bullets:
+            b.move()
+
         # контроль всех НЛО (удаление, взрывы, выпуск снарядов)
         for en in self.enemies:
             if type(en) == game_objects.BossUFO and\
@@ -154,12 +160,6 @@ class Game:
             self.explosions.append(animations.ExplosionAnimation(animations.LARGE,
                                                                  self.player.rect.center,
                                                                  self.game_window))
-
-        # передвижение объектов
-        for en in self.enemies:
-            en.move()
-        for b in self.bullets:
-            b.move()
 
         # проверка на смерть игрока
         if self.player.health < 1:

@@ -1,20 +1,30 @@
 import interface
 import pygame
 import cv2.cv2 as cv2
+from abc import ABC, abstractmethod
 
 
-class CameraControl:
+class Control(ABC):
+    def __init__(self, rect):
+        self.rect = rect
+
+    @abstractmethod
+    def move_object(self):
+        pass
+
+
+class CameraControl(Control):
     WEBCAM_SIZE_X = 400
     WEBCAM_SIZE_Y = 400
-    HAAR_CASCADE_PATH = '/home/edadasko/haarcascades/haarcascade_frontalface_default.xml'
+    HAAR_CASCADE_PATH = 'haar_cascades/spaceship_cascade_medium.xml'
     MIN_STEP = 5
 
     def __init__(self, rect):
-        self.face_cascade = cv2.CascadeClassifier(self.HAAR_CASCADE_PATH)
+        Control.__init__(self, rect)
+        self.spaceship_cascade = cv2.CascadeClassifier(self.HAAR_CASCADE_PATH)
         self.capture = cv2.VideoCapture(0)
         self.is_object_initialized = False
-        self.is_face_detected = False
-        self.rect = rect
+        self.is_object_detected = False
         self.last_x = 0
         self.last_y = 0
 
@@ -23,7 +33,7 @@ class CameraControl:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         if not self.is_object_initialized:
-            faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+            faces = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
             for (x, y, w, h) in faces:
                 cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
                 cv2.imshow('img', img)
@@ -35,7 +45,7 @@ class CameraControl:
                 return
             self.rect.center = (interface.WINDOW_SIZE_X / 2, interface.WINDOW_SIZE_Y * 0.8)
 
-        faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+        faces = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
         for (x, y, w, h) in faces:
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
             cv2.imshow('img', img)
@@ -46,14 +56,14 @@ class CameraControl:
                 self.rect.move_ip((0, 0))
                 return
             self.rect.move_ip(step, 0)
-            self.is_face_detected = True
+            self.is_object_detected = True
             self.last_x = x
             self.last_y = y
             return
 
-        if not self.is_face_detected:
+        if not self.is_object_detected:
             self.rect.move_ip((0, 0))
-            self.is_face_detected = False
+            self.is_object_detected = False
             return
 
     def destroy(self):
@@ -61,9 +71,9 @@ class CameraControl:
         cv2.destroyAllWindows()
 
 
-class MouseControl:
+class MouseControl(Control):
     def __init__(self, rect):
-        self.rect = rect
+        Control.__init__(self, rect)
         self.is_object_initialized = False
 
     def move_object(self):
