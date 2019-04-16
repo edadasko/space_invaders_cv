@@ -14,8 +14,8 @@ class Control(ABC):
 
 
 class CameraControl(Control):
-    WEBCAM_SIZE_X = 400
-    WEBCAM_SIZE_Y = 400
+    WEBCAM_SIZE_X = 600
+    WEBCAM_SIZE_Y = 600
     HAAR_CASCADE_PATH = 'haar_cascades/spaceship_cascade_medium.xml'
     MIN_STEP = 5
 
@@ -24,46 +24,34 @@ class CameraControl(Control):
         self.spaceship_cascade = cv2.CascadeClassifier(self.HAAR_CASCADE_PATH)
         self.capture = cv2.VideoCapture(0)
         self.is_object_initialized = False
-        self.is_object_detected = False
         self.last_x = 0
-        self.last_y = 0
 
     def move_object(self):
         ret, img = self.capture.read()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         if not self.is_object_initialized:
-            faces = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
-            for (x, y, w, h) in faces:
-                cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-                cv2.imshow('img', img)
-                self.rect.center = (interface.WINDOW_SIZE_X - x / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X,
-                                    interface.WINDOW_SIZE_Y * 0.8)
+            spaceship_detector = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
+            for (x, y, w, h) in spaceship_detector:
                 self.is_object_initialized = True
                 self.last_x = x
-                self.last_y = y
+                self.rect.center = ((self.WEBCAM_SIZE_X - x) / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X,
+                                    interface.WINDOW_SIZE_Y * 0.8)
                 return
             self.rect.center = (interface.WINDOW_SIZE_X / 2, interface.WINDOW_SIZE_Y * 0.8)
+            return
 
-        faces = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
-        for (x, y, w, h) in faces:
+        spaceship_detector = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
+        for (x, y, w, h) in spaceship_detector:
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-            cv2.imshow('img', img)
+            cv2.imshow('Face Detection', img)
             step = (self.last_x - x) / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X
             if abs(step) < self.MIN_STEP or \
                x / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X < 0 or \
                x / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X > interface.WINDOW_SIZE_X:
-                self.rect.move_ip((0, 0))
                 return
             self.rect.move_ip(step, 0)
-            self.is_object_detected = True
             self.last_x = x
-            self.last_y = y
-            return
-
-        if not self.is_object_detected:
-            self.rect.move_ip((0, 0))
-            self.is_object_detected = False
             return
 
     def destroy(self):
