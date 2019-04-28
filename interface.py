@@ -39,7 +39,7 @@ class Button:
 
 class HealthIndicator:
     SIZE = 100
-    image = pygame.transform.scale(pygame.image.load('heart.png'), (SIZE, SIZE))
+    image = pygame.transform.scale(pygame.image.load('game_pictures/heart.png'), (SIZE, SIZE))
 
     def __init__(self, game_window):
         self.game_window = game_window

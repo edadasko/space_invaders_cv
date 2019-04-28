@@ -11,7 +11,7 @@ class Player:
     MAX_HEALTH = 5
     health = 3
 
-    image_path = 'player.png'
+    image_path = 'game_pictures/player.png'
     image = pygame.transform.scale(pygame.image.load(image_path),
                                    (SIZE_X, SIZE_Y))
 
@@ -77,7 +77,7 @@ class Bullet(ABC):
 
 
 class PlayerBullet(Bullet):
-    image = pygame.transform.rotate(pygame.image.load("bullets/bullet.png"), 90)
+    image = pygame.transform.rotate(pygame.image.load("bullets_pictures/bullet.png"), 90)
     collision_sound = pygame.mixer.Sound("sounds/explosion_2.wav")
     collision_sound.set_volume(0.5)
 
@@ -106,9 +106,9 @@ class PlayerBullet(Bullet):
 
 
 class BossBullet(Bullet):
-    images = [pygame.transform.rotate(pygame.image.load("bullets/boss_bullet.png"), 0),
-              pygame.transform.rotate(pygame.image.load("bullets/boss_bullet.png"), -45),
-              pygame.transform.rotate(pygame.image.load("bullets/boss_bullet.png"), 45)]
+    images = [pygame.transform.rotate(pygame.image.load("bullets_pictures/boss_bullet.png"), 0),
+              pygame.transform.rotate(pygame.image.load("bullets_pictures/boss_bullet.png"), -45),
+              pygame.transform.rotate(pygame.image.load("bullets_pictures/boss_bullet.png"), 45)]
     quantity_of_types = 3
 
     collision_sound = pygame.mixer.Sound("sounds/explosion_1.wav")
@@ -268,7 +268,7 @@ class BossUFO(UFO):
 
 class Background:
     speed = 10
-    image = pygame.transform.scale(pygame.image.load("space.png"),
+    image = pygame.transform.scale(pygame.image.load("game_pictures/space.png"),
                                    (interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
 
     def __init__(self, game_window):
