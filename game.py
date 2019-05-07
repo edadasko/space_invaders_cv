@@ -25,7 +25,7 @@ class Game:
 
         self.main_clock = pygame.time.Clock()
         self.game_window = pygame.display.set_mode((interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
-        self.player = game_objects.Player(self.control, self.game_window)
+        self.player = game_objects.Player(self.control, self.game_window, "edadasko")
         self.background = game_objects.Background(self.game_window)
 
         self.health_indicator = interface.HealthIndicator(self.game_window)
@@ -60,7 +60,7 @@ class Game:
         self.set_all_to_zero()
         pygame.mixer.music.play(-1)
         self.control = current_control
-        self.player = game_objects.Player(self.control, self.game_window)
+        self.player = game_objects.Player(self.control, self.game_window, "edadasko")
         pygame.mouse.set_visible(False)
 
         repeat = self.update_game_window()
@@ -130,6 +130,7 @@ class Game:
                         self.explosions.append(animations.ExplosionAnimation(animations.LARGE,
                                                en.rect.center,
                                                self.game_window))
+                    self.player.add_killed_enemy()
                 self.enemies.remove(en)
 
         # удаление неактивных снарядов
@@ -163,11 +164,13 @@ class Game:
 
         # проверка на смерть игрока
         if self.player.health < 1:
+            self.player.add_played_game()
+            self.player.update_statistics(self.score)
             return False
 
         # индикаторы состояния игры
         self.health_indicator.show(self.player.health)
-        self.points_indicator.show(self.score)
+        self.points_indicator.show(self.score, self.player)
 
         # нажатие мыши -> выпуск снарядов
         pressed = pygame.mouse.get_pressed()

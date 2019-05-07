@@ -1,8 +1,36 @@
 import random
 import pygame
 import interface
+from pymongo import MongoClient
 from abc import ABC, abstractmethod
 pygame.mixer.init()
+
+
+class Statistics:
+    records = [0, 0, 0, 0, 0]
+    killed_enemies = 0
+    played_games = 0
+
+    def __init__(self, username):
+        self.username = username
+        self.client = MongoClient('localhost', 27017)
+        self.db = self.client.space_invaders.users
+        self.upload_data_from_db()
+
+    def upload_data_from_db(self):
+        data = self.db.find_one({"username": self.username})
+        if data:
+            self.records = data["records"]
+            self.killed_enemies = data["killed_enemies"]
+            self.played_games = data["played_games"]
+        else:
+            self.save_data_to_db()
+
+    def save_data_to_db(self):
+        self.db.update({'username': self.username},
+                       {'username': self.username, 'records': self.records,
+                        'killed_enemies': self.killed_enemies, 'played_games': self.played_games},
+                       upsert=True)
 
 
 class Player:
@@ -15,7 +43,8 @@ class Player:
     image = pygame.transform.scale(pygame.image.load(image_path),
                                    (SIZE_X, SIZE_Y))
 
-    def __init__(self, current_control, game_window):
+    def __init__(self, current_control, game_window, player_name):
+        self.statistics = Statistics(player_name)
         self.shoot_sound = pygame.mixer.Sound("sounds/player_shoot.wav")
         self.shoot_sound.set_volume(0.5)
         self.collision_sound = pygame.mixer.Sound("sounds/explosion_1.wav")
@@ -48,6 +77,23 @@ class Player:
     def add_health(self):
         if self.health < self.MAX_HEALTH:
             self.health += 1
+
+    def update_statistics(self, score):
+        for i in range(5):
+            if score > self.statistics.records[i]:
+                self.statistics.records[i+1:5] = self.statistics.records[i:4]
+                self.statistics.records[i] = score
+                break
+        self.statistics.save_data_to_db()
+
+    def add_killed_enemy(self):
+        self.statistics.killed_enemies += 1
+
+    def add_played_game(self):
+        self.statistics.played_games += 1
+
+    def get_high_score(self):
+        return self.statistics.records[0]
 
 
 class Bullet(ABC):

@@ -61,8 +61,12 @@ class PointsIndicator:
     def __init__(self, game_window):
         self.game_window = game_window
 
-    def show(self, points):
+    def show(self, points, player):
         draw_text('Score: %s' % points, self.game_window, self.SIZE, self.COLOR, 10, 110)
+        if player.get_high_score() > points:
+            draw_text('Record: %s' % player.get_high_score(), self.game_window, self.SIZE, self.COLOR, 10, 150)
+        else:
+            draw_text('New Record!', self.game_window, self.SIZE, self.COLOR, 10, 150)
 
 
 def draw_text(text, surface, font_size, color, x, y):
