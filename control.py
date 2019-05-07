@@ -79,3 +79,6 @@ class MouseControl(Control):
                     return
                 pygame.mouse.set_pos(self.rect.centerx, self.rect.centery)
                 self.rect.move_ip(event.pos[0] - self.rect.centerx, 0)
+
+    def destroy(self):
+        pass

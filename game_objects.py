@@ -6,33 +6,6 @@ from abc import ABC, abstractmethod
 pygame.mixer.init()
 
 
-class Statistics:
-    records = [0, 0, 0, 0, 0]
-    killed_enemies = 0
-    played_games = 0
-
-    def __init__(self, username):
-        self.username = username
-        self.client = MongoClient('localhost', 27017)
-        self.db = self.client.space_invaders.users
-        self.upload_data_from_db()
-
-    def upload_data_from_db(self):
-        data = self.db.find_one({"username": self.username})
-        if data:
-            self.records = data["records"]
-            self.killed_enemies = data["killed_enemies"]
-            self.played_games = data["played_games"]
-        else:
-            self.save_data_to_db()
-
-    def save_data_to_db(self):
-        self.db.update({'username': self.username},
-                       {'username': self.username, 'records': self.records,
-                        'killed_enemies': self.killed_enemies, 'played_games': self.played_games},
-                       upsert=True)
-
-
 class Player:
     SIZE_X = 200
     SIZE_Y = 200
@@ -79,12 +52,13 @@ class Player:
             self.health += 1
 
     def update_statistics(self, score):
-        for i in range(5):
+        for i in range(self.statistics.RECORDS_COUNT):
             if score > self.statistics.records[i]:
-                self.statistics.records[i+1:5] = self.statistics.records[i:4]
+                self.statistics.records[i+1:self.statistics.RECORDS_COUNT] \
+                    = self.statistics.records[i:self.statistics.RECORDS_COUNT - 1]
                 self.statistics.records[i] = score
                 break
-        self.statistics.save_data_to_db()
+        self.statistics.save_user_to_db()
 
     def add_killed_enemy(self):
         self.statistics.killed_enemies += 1
@@ -94,6 +68,13 @@ class Player:
 
     def get_high_score(self):
         return self.statistics.records[0]
+
+    def change_control(self, control):
+        self.health = 3
+        self.control = control(self.rect)
+
+    def delete_statistics(self):
+        self.statistics.delete_user_from_db()
 
 
 class Bullet(ABC):
@@ -336,3 +317,47 @@ class Background:
                 self.rects.append(new_rect)
             r.move_ip(0, self.speed)
             self.game_window.blit(self.image, r)
+
+
+class Statistics:
+    RECORDS_COUNT = 5
+    records = []
+    for i in range(RECORDS_COUNT):
+        records.append(0)
+    killed_enemies = 0
+    played_games = 0
+
+    def __init__(self, username):
+        self.username = username
+        self.client = MongoClient('localhost', 27017)
+        self.db = self.client.space_invaders.users
+        self.upload_user_from_db()
+
+    def upload_user_from_db(self):
+        data = self.db.find_one({"username": self.username})
+        if data:
+            self.records = data["records"]
+            self.killed_enemies = data["killed_enemies"]
+            self.played_games = data["played_games"]
+        else:
+            self.reset_data()
+            self.save_user_to_db()
+
+    def save_user_to_db(self):
+        self.db.update({'username': self.username},
+                       {'username': self.username, 'records': self.records,
+                        'killed_enemies': self.killed_enemies, 'played_games': self.played_games},
+                       upsert=True)
+
+    def reset_data(self):
+        self.records = []
+        for i in range(self.RECORDS_COUNT):
+            self.records.append(0)
+        self.killed_enemies = 0
+        self.played_games = 0
+
+    @staticmethod
+    def delete_user_from_db(username):
+        client = MongoClient('localhost', 27017)
+        db = client.space_invaders.users
+        db.remove({'username': username}, True)

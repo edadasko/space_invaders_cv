@@ -14,6 +14,7 @@ class Game:
     CHANGE_SCORE = 1000
 
     def __init__(self):
+        self.username = ""
         pygame.init()
         pygame.mixer.init()
         pygame.mixer.music.load('sounds/background.mp3')
@@ -25,7 +26,7 @@ class Game:
 
         self.main_clock = pygame.time.Clock()
         self.game_window = pygame.display.set_mode((interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
-        self.player = game_objects.Player(self.control, self.game_window, "edadasko")
+        self.player = None
         self.background = game_objects.Background(self.game_window)
 
         self.health_indicator = interface.HealthIndicator(self.game_window)
@@ -47,20 +48,33 @@ class Game:
 
         self.pause = False
 
-        pygame.display.set_caption('lab_3')
+        pygame.display.set_caption('Space Invaders')
         pygame.mouse.set_visible(True)
 
     def main_menu(self):
         pygame.mixer.music.stop()
         self.set_all_to_zero()
         self.background.show()
-        interface.show_main_menu(self, self.game_window)
+        interface.show_main_menu(self)
+
+    def statistics_menu(self):
+        self.background.show()
+        interface.show_statistics_menu(self)
+
+    def choose_player_menu(self):
+        self.background.show()
+        interface.show_choose_player_menu(self)
+
+    def change_user(self, username):
+        self.username = username
+        self.player = game_objects.Player(self.control, self.game_window, self.username)
+        self.main_menu()
 
     def start(self, current_control):
         self.set_all_to_zero()
         pygame.mixer.music.play(-1)
         self.control = current_control
-        self.player = game_objects.Player(self.control, self.game_window, "edadasko")
+        self.player.change_control(self.control)
         pygame.mouse.set_visible(False)
 
         repeat = self.update_game_window()
@@ -213,4 +227,4 @@ class Game:
 
 
 game = Game()
-game.main_menu()
+game.choose_player_menu()
