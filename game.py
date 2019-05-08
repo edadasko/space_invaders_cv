@@ -61,6 +61,10 @@ class Game:
         self.background.show()
         interface.show_statistics_menu(self)
 
+    def top_menu(self):
+        self.background.show()
+        interface.show_top_menu(self)
+
     def choose_player_menu(self):
         self.background.show()
         interface.show_choose_player_menu(self)

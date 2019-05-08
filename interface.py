@@ -37,7 +37,8 @@ class Button:
             elif self.text == "Play again":
                 self.action(self.sender.control)
             elif self.text == "Choose":
-                self.action(self.sender.text)
+                if self.sender.text:
+                    self.action(self.sender.text)
             elif self.text == "Delete player":
                 self.action(self.sender.text)
                 self.sender.erase()
@@ -230,34 +231,65 @@ def show_main_menu(game):
 def show_statistics_menu(game):
     stats = game.player.statistics
     pygame.mouse.set_visible(True)
-    draw_text('Statistics', game.game_window, 150, NICE_BLUE,
-              (WINDOW_SIZE_X / 2 - 250), (WINDOW_SIZE_Y / 15))
+    draw_text('Your Statistics', game.game_window, 150, NICE_BLUE,
+              (WINDOW_SIZE_X / 3 - 100), (WINDOW_SIZE_Y / 15))
     draw_text('Records', game.game_window, 150, NICE_BLUE,
-              (WINDOW_SIZE_X / 2 - 600), (WINDOW_SIZE_Y / 4))
+              (WINDOW_SIZE_X / 5), (WINDOW_SIZE_Y / 4))
     for i in range(stats.RECORDS_COUNT):
         draw_text(str(i + 1)+". "+str(stats.records[i]), game.game_window, 150, NICE_BLUE,
-                  (WINDOW_SIZE_X / 2 - 600), (WINDOW_SIZE_Y / 4 + (i + 1) * 100))
+                  (WINDOW_SIZE_X / 5), (WINDOW_SIZE_Y / 4 + (i + 1) * 110))
 
     image_heart = pygame.transform.scale(pygame.image.load('game_pictures/heart.png'), (200, 200))
-    rect_heart = pygame.Rect(WINDOW_SIZE_X / 2, WINDOW_SIZE_Y / 2 - 300, 200, 200)
+    rect_heart = pygame.Rect(WINDOW_SIZE_X / 2 + 20, WINDOW_SIZE_Y / 2 - 300, 200, 200)
     draw_text(str(stats.played_games), game.game_window, 300, NICE_BLUE,
-              (WINDOW_SIZE_X / 2 + 250), (WINDOW_SIZE_Y / 2 - 290))
+              (WINDOW_SIZE_X / 2 + 270), (WINDOW_SIZE_Y / 2 - 290))
     game.game_window.blit(image_heart, rect_heart)
 
     image_ufo = pygame.transform.scale(pygame.image.load('ufo_pictures/ufo_2.png'), (200, 200))
-    rect_ufo = pygame.Rect(WINDOW_SIZE_X / 2, WINDOW_SIZE_Y / 2, 200, 200)
+    rect_ufo = pygame.Rect(WINDOW_SIZE_X / 2 + 20, WINDOW_SIZE_Y / 2, 200, 200)
     draw_text(str(stats.killed_enemies), game.game_window, 300, NICE_BLUE,
-              (WINDOW_SIZE_X / 2 + 250), (WINDOW_SIZE_Y / 2))
+              (WINDOW_SIZE_X / 2 + 270), (WINDOW_SIZE_Y / 2))
     game.game_window.blit(image_ufo, rect_ufo)
 
+    top_button = Button(game.game_window,
+                        WINDOW_SIZE_X / 2 - 670,
+                        WINDOW_SIZE_Y / 2 + 400,
+                        600, 100, NICE_BLUE,
+                        "Top Players",
+                        game.top_menu)
     menu_button = Button(game.game_window,
-                         WINDOW_SIZE_X / 2 - 300,
+                         WINDOW_SIZE_X / 2 + 70,
                          WINDOW_SIZE_Y / 2 + 400,
                          600, 100, NICE_BLUE,
                          "Main Menu",
                          game.main_menu)
 
-    clicks_checked(menu_button)
+    clicks_checked(menu_button, top_button)
+
+
+def show_top_menu(game):
+    records = game_objects.Statistics.get_global_records_from_db()
+    pygame.mouse.set_visible(True)
+    draw_text('Top Players', game.game_window, 150, NICE_BLUE,
+              (WINDOW_SIZE_X / 2 - 300), (WINDOW_SIZE_Y / 15))
+    for i in range(game_objects.Statistics.RECORDS_COUNT):
+        draw_text(str(i + 1)+". " + records[i][1] + "  (" + str(records[i][0]) + ")", game.game_window, 150, WHITE,
+                  (WINDOW_SIZE_X / 5), (WINDOW_SIZE_Y / 9 + (i + 1) * 150))
+
+    statistics_button = Button(game.game_window,
+                               WINDOW_SIZE_X / 2 - 670,
+                               WINDOW_SIZE_Y / 2 + 400,
+                               600, 100, NICE_BLUE,
+                               "Your statistics",
+                               game.statistics_menu)
+    menu_button = Button(game.game_window,
+                         WINDOW_SIZE_X / 2 + 70,
+                         WINDOW_SIZE_Y / 2 + 400,
+                         600, 100, NICE_BLUE,
+                         "Main Menu",
+                         game.main_menu)
+
+    clicks_checked(menu_button, statistics_button)
 
 
 def show_lose_menu(game):

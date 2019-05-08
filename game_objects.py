@@ -361,3 +361,24 @@ class Statistics:
         client = MongoClient('localhost', 27017)
         db = client.space_invaders.users
         db.remove({'username': username}, True)
+
+    @staticmethod
+    def get_global_records_from_db():
+        client = MongoClient('localhost', 27017)
+        db = client.space_invaders.users
+        users = db.find()
+        tops = []
+        for user in users:
+            for i in range(Statistics.RECORDS_COUNT):
+                tops.append([user["records"][i], user["username"]])
+        tops.sort(key=lambda x: x[0], reverse=True)
+        for i in range(Statistics.RECORDS_COUNT):
+            if tops[i][0] == 0:
+                tops[i] = ["-", "-"]
+        return tops[:Statistics.RECORDS_COUNT]
+
+
+
+
+
+
