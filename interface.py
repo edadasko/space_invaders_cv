@@ -2,6 +2,7 @@ import pygame
 import control
 import sys
 import game_objects
+import database
 pygame.init()
 
 WINDOW_SIZE_X = 1800
@@ -111,7 +112,7 @@ def show_choose_player_menu(game):
                            WINDOW_SIZE_Y / 2 + 300,
                            600, 100, NICE_BLUE,
                            "Delete player",
-                           game_objects.Statistics.delete_user_from_db,
+                           database.delete_user,
                            input_box)
 
     buttons = [choose_button, delete_button]
@@ -268,7 +269,7 @@ def show_statistics_menu(game):
 
 
 def show_top_menu(game):
-    records = game_objects.Statistics.get_global_records_from_db()
+    records = database.get_global_records()
     pygame.mouse.set_visible(True)
     draw_text('Top Players', game.game_window, 150, NICE_BLUE,
               (WINDOW_SIZE_X / 2 - 300), (WINDOW_SIZE_Y / 15))

@@ -1,7 +1,7 @@
 import random
 import pygame
 import interface
-from pymongo import MongoClient
+import database
 from abc import ABC, abstractmethod
 pygame.mixer.init()
 
@@ -74,7 +74,7 @@ class Player:
         self.control = control(self.rect)
 
     def delete_statistics(self):
-        self.statistics.delete_user_from_db()
+        database.delete_user(self.statistics.username)
 
 
 class Bullet(ABC):
@@ -329,25 +329,13 @@ class Statistics:
 
     def __init__(self, username):
         self.username = username
-        self.client = MongoClient('localhost', 27017)
-        self.db = self.client.space_invaders.users
         self.upload_user_from_db()
 
     def upload_user_from_db(self):
-        data = self.db.find_one({"username": self.username})
-        if data:
-            self.records = data["records"]
-            self.killed_enemies = data["killed_enemies"]
-            self.played_games = data["played_games"]
-        else:
-            self.reset_data()
-            self.save_user_to_db()
+        database.upload_user(self)
 
     def save_user_to_db(self):
-        self.db.update({'username': self.username},
-                       {'username': self.username, 'records': self.records,
-                        'killed_enemies': self.killed_enemies, 'played_games': self.played_games},
-                       upsert=True)
+        database.save_user(self)
 
     def reset_data(self):
         self.records = []
@@ -355,27 +343,6 @@ class Statistics:
             self.records.append(0)
         self.killed_enemies = 0
         self.played_games = 0
-
-    @staticmethod
-    def delete_user_from_db(username):
-        client = MongoClient('localhost', 27017)
-        db = client.space_invaders.users
-        db.remove({'username': username}, True)
-
-    @staticmethod
-    def get_global_records_from_db():
-        client = MongoClient('localhost', 27017)
-        db = client.space_invaders.users
-        users = db.find()
-        tops = []
-        for user in users:
-            for i in range(Statistics.RECORDS_COUNT):
-                tops.append([user["records"][i], user["username"]])
-        tops.sort(key=lambda x: x[0], reverse=True)
-        for i in range(Statistics.RECORDS_COUNT):
-            if tops[i][0] == 0:
-                tops[i] = ["-", "-"]
-        return tops[:Statistics.RECORDS_COUNT]
 
 
 
