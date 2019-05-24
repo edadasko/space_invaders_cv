@@ -20,10 +20,6 @@ class Game:
         pygame.mixer.music.load('sounds/background.mp3')
         self.control = control.MouseControl
 
-        self.enemies = []
-        self.bullets = []
-        self.explosions = []
-
         self.main_clock = pygame.time.Clock()
         self.game_window = pygame.display.set_mode((interface.WINDOW_SIZE_X, interface.WINDOW_SIZE_Y))
         self.player = None
@@ -31,6 +27,10 @@ class Game:
 
         self.health_indicator = interface.HealthIndicator(self.game_window)
         self.points_indicator = interface.PointsIndicator(self.game_window)
+
+        self.enemies = []
+        self.bullets = []
+        self.explosions = []
 
         self.score = 0
         self.change_score = 0
@@ -90,14 +90,29 @@ class Game:
 
     def update_game_window(self):
         self.background.update()
+
+        self.add_game_points()
+        self.change_ufo_type()
+        self.create_ufo()
+        self.move_objects()
+        self.update_ufos()
+        self.create_explosions()
+        self.create_bullets()
+        self.show_indicators()
+        pygame.display.update()
+
+        self.check_exit()
+        self.main_clock.tick(self.FPS)
+        return self.check_players_health()
+
+    def add_game_points(self):
         self.score += 1
         self.change_score += 1
         self.enemy_checker += 1
         self.bullet_checker += 1
         self.boss_bullet_checker += 1
-        self.player.move()
 
-        # смена вида НЛО
+    def change_ufo_type(self):
         if self.change_score > self.CHANGE_SCORE and not self.is_boss:
             self.difficulty += 1
             new_level_type = self.current_level_type
@@ -107,7 +122,7 @@ class Game:
             self.change_score = 0
             self.current_level_type = new_level_type
 
-        # добавление НЛО на экран
+    def create_ufo(self):
         if self.ufo is game_objects.BossUFO and not self.is_boss:
             enemy = self.ufo(self.game_window, self.difficulty)
             enemy.create()
@@ -120,13 +135,17 @@ class Game:
                 enemy.create()
                 self.enemies.append(enemy)
 
-        # передвижение объектов
+    def move_objects(self):
+        self.player.move()
         for en in self.enemies:
             en.move()
         for b in self.bullets:
             b.move()
+        for ex in self.explosions:
+            if not ex.update():
+                self.explosions.remove(ex)
 
-        # контроль всех НЛО (удаление, взрывы, выпуск снарядов)
+    def update_ufos(self):
         for en in self.enemies:
             if type(en) == game_objects.BossUFO and\
                     self.boss_bullet_checker > game_objects.BossUFO.FREQUENCY_OF_BULLETS and\
@@ -151,12 +170,7 @@ class Game:
                     self.player.add_killed_enemy()
                 self.enemies.remove(en)
 
-        # удаление неактивных снарядов
-        for ex in self.explosions:
-            if not ex.update():
-                self.explosions.remove(ex)
-
-        # коллизии снарядов с объектами -> взрывы
+    def create_explosions(self):
         for b in self.bullets:
             if type(b) == game_objects.PlayerBullet and b.is_collision(self.enemies):
                 ex = animations.ExplosionAnimation(animations.SMALL,
@@ -180,25 +194,25 @@ class Game:
                                                                  self.player.rect.center,
                                                                  self.game_window))
 
-        # проверка на смерть игрока
-        if self.player.health < 1:
-            self.player.add_played_game()
-            self.player.update_statistics(self.score)
-            return False
-
-        # индикаторы состояния игры
-        self.health_indicator.show(self.player.health)
-        self.points_indicator.show(self.score, self.player)
-
-        # нажатие мыши -> выпуск снарядов
+    def create_bullets(self):
         pressed = pygame.mouse.get_pressed()
         if self.bullet_checker > self.FREQUENCY_OF_BULLETS and \
                 (pressed[0] or self.control is control.CameraControl):
             self.bullets.extend(list(self.player.shoot()))
             self.bullet_checker = 0
 
-        pygame.display.update()
+    def show_indicators(self):
+        self.health_indicator.show(self.player.health)
+        self.points_indicator.show(self.score, self.player)
 
+    def check_players_health(self):
+        if self.player.health < 1:
+            self.player.add_played_game()
+            self.player.update_statistics(self.score)
+            return False
+        return True
+
+    def check_exit(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
@@ -210,8 +224,6 @@ class Game:
             k = cv2.waitKey(30) & 0xff
             if k == 27:
                 return False
-        self.main_clock.tick(self.FPS)
-        return True
 
     def set_all_to_zero(self):
         self.score = 0

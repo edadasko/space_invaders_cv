@@ -321,14 +321,12 @@ class Background:
 
 class Statistics:
     RECORDS_COUNT = 5
-    records = []
-    for i in range(RECORDS_COUNT):
-        records.append(0)
     killed_enemies = 0
     played_games = 0
 
     def __init__(self, username):
         self.username = username
+        self.records = 0
         self.upload_user_from_db()
 
     def upload_user_from_db(self):
@@ -343,9 +341,3 @@ class Statistics:
             self.records.append(0)
         self.killed_enemies = 0
         self.played_games = 0
-
-
-
-
-
-

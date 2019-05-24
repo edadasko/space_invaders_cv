@@ -16,9 +16,7 @@ def upload_user(stats):
         stats.killed_enemies = data["killed_enemies"]
         stats.played_games = data["played_games"]
     else:
-        stats.records = [0, 0, 0, 0, 0]
-        stats.killed_enemies = 0
-        stats.played_games = 0
+        stats.reset_data()
         save_user(stats)
 
 

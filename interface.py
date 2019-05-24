@@ -86,9 +86,9 @@ class InputBox:
         self.draw()
 
     def draw(self):
-        width = max(self.w, self.txt_surface.get_width()+10)
+        width = max(self.w, self.txt_surface.get_width() + 10)
         self.rect.w = width
-        self.screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        self.screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + 5))
         pygame.draw.rect(self.screen, self.color, self.rect, 2)
 
 

@@ -44,7 +44,7 @@ class CameraControl(Control):
         spaceship_detector = self.spaceship_cascade.detectMultiScale(gray, 1.3, 5)
         for (x, y, w, h) in spaceship_detector:
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-            cv2.imshow('Face Detection', img)
+            cv2.imshow('Camera Detection', img)
             step = (self.last_x - x) / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X
             if abs(step) < self.MIN_STEP or \
                x / self.WEBCAM_SIZE_X * interface.WINDOW_SIZE_X < 0 or \
